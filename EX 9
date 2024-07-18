@@ -1,0 +1,24 @@
+import hashlib
+
+def md5_hash(text):
+    # Create an MD5 hash object
+    hash_object = hashlib.md5()
+
+    # Update the hash object with the bytes of the input text
+    hash_object.update(text.encode())
+
+    # Get the hexadecimal representation of the hash
+    hash_hex = hash_object.hexdigest()
+
+    return hash_hex
+
+# Example usage:
+message = "Hello, World!"
+hash_value = md5_hash(message)
+print("Message:", message)
+print("MD5 Hash:", hash_value)
+
+OUTPUT:
+
+Message: Hello, World!
+MD5 Hash: 65a8e27d8879283831b664bd8b7f0ad4
