@@ -1,0 +1,59 @@
+import random
+
+def generate_prime(n):
+    """Generate a prime number of n bits"""
+    while True:
+        prime_candidate = random.getrandbits(n)
+        if is_prime(prime_candidate):
+            return prime_candidate
+
+def is_prime(num):
+    """Check if a number is a prime"""
+    if num < 2:
+        return False
+    for i in range(2, int(num**0.5) + 1):
+        if num % i == 0:
+            return False
+    return True
+
+def diffie_hellman_key_exchange(bits=8):
+    """Simple implementation of Diffie-Hellman Key Exchange"""
+    # Step 1: Agree on public parameters
+    p = generate_prime(bits)
+    g = random.randint(2, p-1)
+    
+    # Step 2: Each party chooses a private key
+    a = random.randint(1, p-1)  # Private key for Alice
+    b = random.randint(1, p-1)  # Private key for Bob
+    
+    # Step 3: Each party computes their public key
+    A = pow(g, a, p)  # Alice's public key
+    B = pow(g, b, p)  # Bob's public key
+    
+    # Step 4: Each party computes the shared secret
+    shared_secret_alice = pow(B, a, p)
+    shared_secret_bob = pow(A, b, p)
+    
+    assert shared_secret_alice == shared_secret_bob  # They should be equal
+    
+    return p, g, a, b, A, B, shared_secret_alice
+
+# Example usage:
+p, g, a, b, A, B, shared_secret = diffie_hellman_key_exchange(8)
+print("Public Prime (p):", p)
+print("Public Base (g):", g)
+print("Alice's Private Key (a):", a)
+print("Bob's Private Key (b):", b)
+print("Alice's Public Key (A):", A)
+print("Bob's Public Key (B):", B)
+print("Shared Secret:", shared_secret)
+
+OUTPUT:
+
+Public Prime (p): 11
+Public Base (g): 8
+Alice's Private Key (a): 7
+Bob's Private Key (b): 8
+Alice's Public Key (A): 2
+Bob's Public Key (B): 5
+Shared Secret: 3
