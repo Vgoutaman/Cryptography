@@ -1,0 +1,77 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+// Function to generate a random key
+void generateKey(int *key, int length) {
+    for (int i = 0; i < length; i++) {
+        key[i] = rand() % 26; // Random number between 0 and 25
+    }
+}
+
+// Function to encrypt the plaintext using the one-time pad key
+void encrypt(char *plaintext, char *ciphertext, int *key, int length) {
+    for (int i = 0; i < length; i++) {
+        int shift = key[i];
+        char ch = plaintext[i];
+        if (ch >= 'A' && ch <= 'Z') {
+            ciphertext[i] = ((ch - 'A' + shift) % 26) + 'A';
+        } else if (ch >= 'a' && ch <= 'z') {
+            ciphertext[i] = ((ch - 'a' + shift) % 26) + 'a';
+        } else {
+            ciphertext[i] = ch; // Non-alphabetic characters are unchanged
+        }
+    }
+    ciphertext[length] = '\0';
+}
+
+// Function to decrypt the ciphertext using the one-time pad key
+void decrypt(char *ciphertext, char *plaintext, int *key, int length) {
+    for (int i = 0; i < length; i++) {
+        int shift = key[i];
+        char ch = ciphertext[i];
+        if (ch >= 'A' && ch <= 'Z') {
+            plaintext[i] = ((ch - 'A' - shift + 26) % 26) + 'A';
+        } else if (ch >= 'a' && ch <= 'z') {
+            plaintext[i] = ((ch - 'a' - shift + 26) % 26) + 'a';
+        } else {
+            plaintext[i] = ch; // Non-alphabetic characters are unchanged
+        }
+    }
+    plaintext[length] = '\0';
+}
+
+int main() {
+    srand(time(0)); // Seed the random number generator
+
+    char plaintext[] = "meet me at the usual place at ten rather than eight oclock";
+    int length = strlen(plaintext);
+
+    // Generate a random key
+    int key[length];
+    generateKey(key, length);
+
+    // Encrypt the plaintext
+    char ciphertext[length + 1];
+    encrypt(plaintext, ciphertext, key, length);
+
+    // Print the ciphertext
+    printf("Ciphertext: %s\n", ciphertext);
+
+    // Decrypt the ciphertext
+    char decryptedtext[length + 1];
+    decrypt(ciphertext, decryptedtext, key, length);
+
+    // Print the decrypted text
+    printf("Decrypted text: %s\n", decryptedtext);
+
+    // Print the key for verification
+    printf("Key: ");
+    for (int i = 0; i < length; i++) {
+        printf("%d ", key[i]);
+    }
+    printf("\n");
+
+    return 0;
+}
