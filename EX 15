@@ -1,0 +1,111 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define ALPHABET_SIZE 26
+
+// English letter frequencies (approximate percentage)
+double englishLetterFrequencies[ALPHABET_SIZE] = {
+    8.167, 1.492, 2.782, 4.253, 12.702, 2.228, 2.015, 6.094, 6.966,
+    0.153, 0.772, 4.025, 2.406, 6.749, 7.507, 1.929, 0.095, 5.987,
+    6.327, 9.056, 2.758, 0.978, 2.360, 0.150, 1.974, 0.074
+};
+
+// Function to compute letter frequencies in the ciphertext
+void computeFrequencies(const char *text, double *frequencies) {
+    int count[ALPHABET_SIZE] = {0};
+    int length = 0;
+
+    // Count each letter in the text
+    for (int i = 0; text[i] != '\0'; i++) {
+        if (text[i] >= 'A' && text[i] <= 'Z') {
+            count[text[i] - 'A']++;
+            length++;
+        } else if (text[i] >= 'a' && text[i] <= 'z') {
+            count[text[i] - 'a']++;
+            length++;
+        }
+    }
+
+    // Calculate frequencies as percentages
+    for (int i = 0; i < ALPHABET_SIZE; i++) {
+        frequencies[i] = ((double)count[i] / length) * 100.0;
+    }
+}
+
+// Function to score a shift based on frequency analysis
+double scoreShift(const double *cipherFrequencies, int shift) {
+    double score = 0.0;
+
+    for (int i = 0; i < ALPHABET_SIZE; i++) {
+        int shiftedIndex = (i + shift) % ALPHABET_SIZE;
+        score += cipherFrequencies[shiftedIndex] * englishLetterFrequencies[i];
+    }
+
+    return score;
+}
+
+// Function to decrypt the text with a given shift
+void decrypt(const char *ciphertext, char *plaintext, int shift) {
+    for (int i = 0; ciphertext[i] != '\0'; i++) {
+        char ch = ciphertext[i];
+        if (ch >= 'A' && ch <= 'Z') {
+            plaintext[i] = ((ch - 'A' - shift + ALPHABET_SIZE) % ALPHABET_SIZE) + 'A';
+        } else if (ch >= 'a' && ch <= 'z') {
+            plaintext[i] = ((ch - 'a' - shift + ALPHABET_SIZE) % ALPHABET_SIZE) + 'a';
+        } else {
+            plaintext[i] = ch;
+        }
+    }
+    plaintext[strlen(ciphertext)] = '\0';
+}
+
+// Function to perform letter frequency attack and produce top N guesses
+void letterFrequencyAttack(const char *ciphertext, int topN) {
+    double cipherFrequencies[ALPHABET_SIZE];
+    computeFrequencies(ciphertext, cipherFrequencies);
+
+    // Array to store shift scores
+    double scores[ALPHABET_SIZE];
+    for (int i = 0; i < ALPHABET_SIZE; i++) {
+        scores[i] = scoreShift(cipherFrequencies, i);
+    }
+
+    // Array to store the top shifts
+    int topShifts[topN];
+    for (int i = 0; i < topN; i++) {
+        topShifts[i] = -1;
+    }
+
+    // Find the top N shifts with the highest scores
+    for (int i = 0; i < ALPHABET_SIZE; i++) {
+        for (int j = 0; j < topN; j++) {
+            if (topShifts[j] == -1 || scores[i] > scores[topShifts[j]]) {
+                for (int k = topN - 1; k > j; k--) {
+                    topShifts[k] = topShifts[k - 1];
+                }
+                topShifts[j] = i;
+                break;
+            }
+        }
+    }
+
+    // Print the top N guesses
+    char plaintext[strlen(ciphertext) + 1];
+    for (int i = 0; i < topN; i++) {
+        decrypt(ciphertext, plaintext, topShifts[i]);
+        printf("Shift %2d: %s\n", topShifts[i], plaintext);
+    }
+}
+
+int main() {
+    char ciphertext[] = "Ymnx nx f qnym zgji yzxyji st ymj vzny yt ymj qfywjyji qtsl xywnsl jshwduy.";
+    int topN = 10;
+
+    printf("Ciphertext: %s\n\n", ciphertext);
+    printf("Top %d possible plaintexts:\n\n", topN);
+
+    letterFrequencyAttack(ciphertext, topN);
+
+    return 0;
+}
