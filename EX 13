@@ -1,0 +1,99 @@
+#include <stdio.h>
+
+// Function to calculate the modular inverse of a number under modulo 26
+int modInverse(int a, int m) {
+    a = a % m;
+    for (int x = 1; x < m; x++) {
+        if ((a * x) % m == 1) {
+            return x;
+        }
+    }
+    return -1; // If no modular inverse exists
+}
+
+// Function to find the determinant of a 2x2 matrix
+int determinant(int matrix[2][2]) {
+    return (matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0]) % 26;
+}
+
+// Function to calculate the cofactor matrix for a 2x2 matrix
+void cofactorMatrix(int matrix[2][2], int cofactor[2][2]) {
+    cofactor[0][0] = matrix[1][1];
+    cofactor[0][1] = -matrix[0][1];
+    cofactor[1][0] = -matrix[1][0];
+    cofactor[1][1] = matrix[0][0];
+}
+
+// Function to find the inverse of a 2x2 matrix under modulo 26
+int findInverseMatrix(int matrix[2][2], int inverse[2][2]) {
+    int det = determinant(matrix);
+    int detInverse = modInverse(det, 26);
+
+    if (detInverse == -1) {
+        return 0; // Inverse doesn't exist
+    }
+
+    int cofactor[2][2];
+    cofactorMatrix(matrix, cofactor);
+
+    // Multiply cofactor matrix by determinant inverse under modulo 26
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
+            inverse[i][j] = (cofactor[i][j] * detInverse) % 26;
+            if (inverse[i][j] < 0) {
+                inverse[i][j] += 26;
+            }
+        }
+    }
+    return 1;
+}
+
+// Function to print a 2x2 matrix
+void printMatrix(int matrix[2][2]) {
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
+            printf("%d ", matrix[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+int main() {
+    // Given plaintext-ciphertext pairs
+    char plaintext1[] = "HI";
+    char ciphertext1[] = "FN";
+    char plaintext2[] = "BY";
+    char ciphertext2[] = "FW";
+
+    // Convert plaintext and ciphertext to numeric values
+    int P[2][2] = {{plaintext1[0] - 'A', plaintext1[1] - 'A'}, {plaintext2[0] - 'A', plaintext2[1] - 'A'}};
+    int C[2][2] = {{ciphertext1[0] - 'A', ciphertext1[1] - 'A'}, {ciphertext2[0] - 'A', ciphertext2[1] - 'A'}};
+
+    // Find the inverse of the plaintext matrix P
+    int P_inverse[2][2];
+    if (!findInverseMatrix(P, P_inverse)) {
+        printf("Inverse of the plaintext matrix does not exist. Choose different plaintext pairs.\n");
+        return -1;
+    }
+
+    // Calculate the key matrix K as K = C * P^-1
+    int K[2][2];
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
+            K[i][j] = 0;
+            for (int k = 0; k < 2; k++) {
+                K[i][j] += C[i][k] * P_inverse[k][j];
+            }
+            K[i][j] %= 26;
+            if (K[i][j] < 0) {
+                K[i][j] += 26;
+            }
+        }
+    }
+
+    // Print the key matrix
+    printf("The key matrix is:\n");
+    printMatrix(K);
+
+    return 0;
+}
