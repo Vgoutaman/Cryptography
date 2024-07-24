@@ -1,0 +1,131 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+#define ALPHABET_SIZE 26
+
+// English letter frequencies (approximate percentage)
+double englishLetterFrequencies[ALPHABET_SIZE] = {
+    8.167, 1.492, 2.782, 4.253, 12.702, 2.228, 2.015, 6.094, 6.966,
+    0.153, 0.772, 4.025, 2.406, 6.749, 7.507, 1.929, 0.095, 5.987,
+    6.327, 9.056, 2.758, 0.978, 2.360, 0.150, 1.974, 0.074
+};
+
+// Function to compute letter frequencies in the ciphertext
+void computeFrequencies(const char *text, double *frequencies) {
+    int count[ALPHABET_SIZE] = {0};
+    int length = 0;
+
+    // Count each letter in the text
+    for (int i = 0; text[i] != '\0'; i++) {
+        if (isalpha(text[i])) {
+            count[toupper(text[i]) - 'A']++;
+            length++;
+        }
+    }
+
+    // Calculate frequencies as percentages
+    for (int i = 0; i < ALPHABET_SIZE; i++) {
+        frequencies[i] = ((double)count[i] / length) * 100.0;
+    }
+}
+
+// Function to map characters based on provided mapping
+void mapCharacters(const char *input, char *output, const char *mapping) {
+    for (int i = 0; input[i] != '\0'; i++) {
+        if (isalpha(input[i])) {
+            if (isupper(input[i])) {
+                output[i] = toupper(mapping[input[i] - 'A']);
+            } else {
+                output[i] = tolower(mapping[input[i] - 'A']);
+            }
+        } else {
+            output[i] = input[i];
+        }
+    }
+    output[strlen(input)] = '\0';
+}
+
+// Function to score a character mapping based on frequency analysis
+double scoreMapping(const double *cipherFrequencies, const char *mapping) {
+    double score = 0.0;
+    for (int i = 0; i < ALPHABET_SIZE; i++) {
+        int mappedIndex = mapping[i] - 'A';
+        score += cipherFrequencies[i] * englishLetterFrequencies[mappedIndex];
+    }
+    return score;
+}
+
+// Function to sort mappings based on their scores
+void sortMappings(char mappings[][ALPHABET_SIZE + 1], double *scores, int numMappings) {
+    for (int i = 0; i < numMappings - 1; i++) {
+        for (int j = i + 1; j < numMappings; j++) {
+            if (scores[j] > scores[i]) {
+                double tempScore = scores[i];
+                scores[i] = scores[j];
+                scores[j] = tempScore;
+
+                char tempMapping[ALPHABET_SIZE + 1];
+                strcpy(tempMapping, mappings[i]);
+                strcpy(mappings[i], mappings[j]);
+                strcpy(mappings[j], tempMapping);
+            }
+        }
+    }
+}
+
+// Function to generate all possible permutations of a character array
+void permute(char *str, int left, int right, char mappings[][ALPHABET_SIZE + 1], int *index) {
+    if (left == right) {
+        strcpy(mappings[*index], str);
+        (*index)++;
+    } else {
+        for (int i = left; i <= right; i++) {
+            // Swap
+            char temp = str[left];
+            str[left] = str[i];
+            str[i] = temp;
+
+            // Recursion
+            permute(str, left + 1, right, mappings, index);
+
+            // Backtrack
+            temp = str[left];
+            str[left] = str[i];
+            str[i] = temp;
+        }
+    }
+}
+
+int main() {
+    char ciphertext[] = "Ymnx nx f qnym zgji yzxyji st ymj vzny yt ymj qfywjyji qtsl xywnsl jshwduy.";
+    int topN = 10;
+
+    double cipherFrequencies[ALPHABET_SIZE];
+    computeFrequencies(ciphertext, cipherFrequencies);
+
+    // Generate all possible mappings (permutations of the alphabet)
+    char alphabet[ALPHABET_SIZE + 1] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    char mappings[10000][ALPHABET_SIZE + 1];  // Adjust size if necessary
+    int numMappings = 0;
+    permute(alphabet, 0, ALPHABET_SIZE - 1, mappings, &numMappings);
+
+    // Score each mapping
+    double scores[numMappings];
+    for (int i = 0; i < numMappings; i++) {
+        scores[i] = scoreMapping(cipherFrequencies, mappings[i]);
+    }
+
+    // Sort mappings based on scores
+    sortMappings(mappings, scores, numMappings);
+
+    // Print the top N guesses
+    char plaintext[strlen(ciphertext) + 1];
+    for (int i = 0; i < topN && i < numMappings; i++) {
+        mapCharacters(ciphertext, plaintext, mappings[i]);
+        printf("Mapping %2d: %s\n", i + 1, plaintext);
+    }
+
+    return 0;
+}
