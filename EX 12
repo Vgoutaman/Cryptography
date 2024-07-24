@@ -1,0 +1,54 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+// Function to convert a character to its corresponding numeric value
+int charToNum(char c) {
+    return toupper(c) - 'A';
+}
+
+// Function to convert a numeric value back to a character
+char numToChar(int n) {
+    return 'A' + (n % 26);
+}
+
+// Function to perform Hill cipher encryption
+void hillCipherEncrypt(char *message, int keyMatrix[2][2]) {
+    int messageLength = strlen(message);
+    char encryptedMessage[messageLength + 1];
+    int i;
+
+    // Ensure the message length is even (for 2x2 key matrix)
+    if (messageLength % 2 != 0) {
+        message[messageLength] = 'X';  // Padding with 'X' if needed
+        message[messageLength + 1] = '\0';
+        messageLength++;
+    }
+
+    for (i = 0; i < messageLength; i += 2) {
+        int num1 = charToNum(message[i]);
+        int num2 = charToNum(message[i + 1]);
+
+        encryptedMessage[i] = numToChar((keyMatrix[0][0] * num1 + keyMatrix[0][1] * num2) % 26);
+        encryptedMessage[i + 1] = numToChar((keyMatrix[1][0] * num1 + keyMatrix[1][1] * num2) % 26);
+    }
+
+    encryptedMessage[messageLength] = '\0'; // Null-terminate the encrypted message
+    printf("Encrypted Message: %s\n", encryptedMessage);
+}
+
+int main() {
+    char message[] = "meetmeattheusualplaceattenratherthaneightoclock";
+    int keyMatrix[2][2] = { {3, 3}, {2, 5} };
+
+    // Convert the message to uppercase and remove spaces
+    for (int i = 0, j = 0; message[i] != '\0'; i++) {
+        if (isalpha(message[i])) {
+            message[j++] = toupper(message[i]);
+        }
+    }
+
+    hillCipherEncrypt(message, keyMatrix);
+
+    return 0;
+}
